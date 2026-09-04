@@ -1,5 +1,11 @@
 # ride-slurp
 
+**Pull rides off a Garmin over USB and export them as GPX, CSV, JSON or a training log.**
+
+[English](README.md) · [Deutsch](README.de.md)
+
+---
+
 A [Claude Code](https://claude.com/claude-code) plugin that pulls rides off a Garmin bike
 computer or watch over USB and gives you them in a format you can actually use — **GPX**
 tracks for Strava, Komoot and maps, a **CSV** of every ride for spreadsheets, JSON, or a
