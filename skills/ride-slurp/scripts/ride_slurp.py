@@ -541,18 +541,20 @@ def cmd_export(args) -> int:
 
 # ---------------------------------------------------------------- rides ----
 
-def render_table(rides: list[dict], lang: str) -> str:
+def render_table(rides: list[dict], lang: str, style: str = "plain") -> str:
     L = LABELS[lang]
-    head = (f"| {L['date']} | {L['profile']} | km | {L['moving']} | km/h | "
-            f"{L['ascent']} | HR | W | NP | TSS |")
-    out = [head, "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|"]
+    head = (f"| {L['date']} | {L['profile']} | km | {L['moving']} | {L['speed_col']} | "
+            f"{L['ascent']} | {L['hr_col']} | {L['w_col']} | NP | TSS | kcal |")
+    out = [head, "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]
     for r in rides:
+        # In an Obsidian vault the date links down to this ride's detail section.
+        date = f"[[#{r['start']}]]" if style == "obsidian" else r["start"]
         out.append(
-            f"| {r['start']} | {r['profile']} | {num(r['km'], 2, lang)} | "
+            f"| {date} | {r['profile']} | {num(r['km'], 2, lang)} | "
             f"{hms(r['moving_s'])} | {num(r['avg_kmh'], 1, lang)} | "
             f"{num(r['ascent_m'], 0, lang)} | {num(r['avg_hr'], 0, lang)} | "
             f"{num(r['avg_w'], 0, lang)} | {num(r['np_w'], 0, lang)} | "
-            f"{num(r['tss'], 0, lang)} |")
+            f"{num(r['tss'], 1, lang)} | {num(r['kcal'], 0, lang)} |")
     return "\n".join(out)
 
 
@@ -569,7 +571,7 @@ def cmd_rides(args) -> int:
             w.writerow(r)
         return 0
     if args.format == "markdown":
-        print(render_table(rides, args.lang))
+        print(render_table(rides, args.lang, args.link_style))
         return 0
 
     hdr = (f"{'date':<16} {'profile':<12} {'km':>7} {'moving':>9} "
@@ -601,6 +603,9 @@ LABELS = {
            "cal": "Calories", "avg_dist": "Avg distance", "avg_speed": "Avg speed",
            "longest": "Longest ride", "route": "Route", "power": "Power", "body": "Body",
            "env": "Environment", "raw": "Raw file", "total": "All time",
+           "elapsed": "Total time", "aerobic": "aerobic", "anaerobic": "anaerobic",
+           "related": "Related", "asc_short": "m",
+           "speed_col": "km/h", "hr_col": "HR", "w_col": "W", "month_col": "Month",
            "months": "Months", "index_title": "Ride log", "count": "Rides",
            "prev": "Previous month", "next": "Next month",
            "index_intro": "One log per month, generated from the `.fit` files "
@@ -613,6 +618,9 @@ LABELS = {
            "cal": "Kalorien", "avg_dist": "ø Distanz", "avg_speed": "ø Geschwindigkeit",
            "longest": "Längste Fahrt", "route": "Strecke", "power": "Leistung",
            "body": "Körper", "env": "Umgebung", "raw": "Rohdaten", "total": "Gesamt",
+           "elapsed": "Gesamtzeit", "aerobic": "aerob", "anaerobic": "anaerob",
+           "related": "Related", "asc_short": "Hm",
+           "speed_col": "ø km/h", "hr_col": "ø HF", "w_col": "ø W", "month_col": "Monat",
            "months": "Monate", "index_title": "Fahrtenlog", "count": "Fahrten",
            "prev": "Vormonat", "next": "Folgemonat",
            "index_intro": "Ein Log pro Monat, erzeugt aus den `.fit`-Dateien "
@@ -662,26 +670,28 @@ def render_month(month, rides, prev, nxt, lang, style, prefix="rides") -> str:
            f"| {L['avg_speed']} | {num(t['km']/hrs, 1, lang)} km/h |",
            f"| {L['longest']} | {num(longest['km'], 2, lang)} km "
            f"({longest['start'][:10]}) |",
-           "", f"## {L['rides']}", "", render_table(rides, lang), "",
+           "", f"## {L['rides']}", "", render_table(rides, lang, style), "",
            f"## {L['details']}", ""]
 
     for r in rides:
         out += [f"### {r['start']}", "",
                 f"**{r['profile']} · {num(r['km'], 2, lang)} km · "
-                f"{hms(r['moving_s'])} · {num(r['ascent_m'], 0, lang)} m**", "",
-                f"- **{L['route']}** - {num(r['km'], 2, lang)} km · "
+                f"{hms(r['moving_s'])} · {num(r['ascent_m'], 0, lang)} {L['asc_short']}**", "",
+                f"- **{L['route']}** — {num(r['km'], 2, lang)} km · "
                 f"ø {num(r['avg_kmh'], 1, lang)} km/h · "
                 f"max {num(r['max_kmh'], 1, lang)} km/h · "
-                f"↑{num(r['ascent_m'], 0, lang)} m ↓{num(r['descent_m'], 0, lang)} m",
-                f"- **{L['power']}** - ø {num(r['avg_w'], 0, lang)} W · "
+                f"↑{num(r['ascent_m'], 0, lang)} m ↓{num(r['descent_m'], 0, lang)} m · "
+                f"{L['elapsed']} {hms(r['elapsed_s'])}",
+                f"- **{L['power']}** — ø {num(r['avg_w'], 0, lang)} W · "
                 f"max {num(r['max_w'], 0, lang)} W · NP {num(r['np_w'], 0, lang)} W · "
                 f"IF {num(r['if'], 2, lang)} · TSS {num(r['tss'], 1, lang)} "
                 f"(FTP {num(r['ftp_w'], 0, lang)} W)",
-                f"- **{L['body']}** - ø {num(r['avg_hr'], 0, lang)} bpm · "
+                f"- **{L['body']}** — ø {num(r['avg_hr'], 0, lang)} bpm · "
                 f"max {num(r['max_hr'], 0, lang)} bpm · "
                 f"ø {num(r['avg_cad'], 0, lang)} rpm · "
-                f"{num(r['kcal'], 0, lang)} kcal",
-                f"- **{L['env']}** - ø {num(r['temp_c'], 0, lang)} °C",
+                f"{num(r['kcal'], 0, lang)} kcal · TE {num(r['te_aer'], 1, lang)} "
+                f"{L['aerobic']} / {num(r['te_ana'], 1, lang)} {L['anaerobic']}",
+                f"- **{L['env']}** — ø {num(r['temp_c'], 0, lang)} °C",
                 f"- {L['raw']}: `Garmin/Activities/{r['file']}`", ""]
 
     nav = []
@@ -689,8 +699,11 @@ def render_month(month, rides, prev, nxt, lang, style, prefix="rides") -> str:
         nav.append(f"- {L['prev']}: {link(f'{prefix}-{prev}', prev, style)}")
     if nxt:
         nav.append(f"- {L['next']}: {link(f'{prefix}-{nxt}', nxt, style)}")
-    if nav:
-        out += ["## " + L["months"], ""] + nav
+    if style == "obsidian":
+        # Vault convention: every note links back to its folder index.
+        out += [f"## {L['related']}", "", "- [[_index]]"] + nav
+    elif nav:
+        out += [f"## {L['months']}", ""] + nav
     return "\n".join(out) + "\n"
 
 
@@ -707,7 +720,7 @@ def render_index(by_month, lang, style, prefix="rides") -> str:
            f"- **TSS:** {num(t['tss'], 0, lang)}",
            f"- **{L['cal']}:** {num(t['kcal'], 0, lang)} kcal", "",
            f"## {L['months']}", "",
-           f"| {L['months']} | {L['count']} | km | {L['moving']} | "
+           f"| {L['month_col']} | {L['count']} | km | {L['moving']} | "
            f"{L['ascent']} | TSS |",
            "|---|---:|---:|---:|---:|---:|"]
     for m, rs in sorted(by_month.items(), reverse=True):
@@ -715,6 +728,8 @@ def render_index(by_month, lang, style, prefix="rides") -> str:
         out.append(f"| {link(f'{prefix}-{m}', m, style)} | {mt['n']} | "
                    f"{num(mt['km'], 1, lang)} | {hms(mt['moving_s'])} | "
                    f"{num(mt['ascent_m'], 0, lang)} | {num(mt['tss'], 0, lang)} |")
+    if style == "obsidian":
+        out += ["", f"## {L['related']}", "", "- [[_index]]"]
     return "\n".join(out) + "\n"
 
 
@@ -780,6 +795,8 @@ def main() -> int:
     r.add_argument("--format", choices=["table", "json", "csv", "markdown"],
                    default="table")
     r.add_argument("--lang", choices=["en", "de"], default="en")
+    r.add_argument("--link-style", choices=["plain", "obsidian"], default="plain",
+                   help="markdown format only: anchor-link each row to its detail section")
     r.set_defaults(func=cmd_rides)
 
     e = sub.add_parser("export", help="write rides out as gpx / csv / json")
