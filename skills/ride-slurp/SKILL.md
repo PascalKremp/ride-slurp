@@ -85,6 +85,7 @@ every month on each run**, so a backfilled old ride lands in the right file auto
 - `--link-style plain` (default) — ordinary relative markdown links. Works anywhere.
 - `--link-style obsidian` — `[[wiki-links]]` and `_index.md`, for an Obsidian vault.
 - `--lang en` (default) or `--lang de` — headings and number formatting (`1.234,5`).
+- `--prefix rides` — filename prefix for the monthly files.
 
 Don't hand-edit the generated files; they're overwritten on the next run.
 

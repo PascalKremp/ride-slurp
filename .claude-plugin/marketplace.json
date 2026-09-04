@@ -3,13 +3,13 @@
   "owner": { "name": "Pascal Kremp", "url": "https://github.com/PascalKremp" },
   "metadata": {
     "description": "Garmin device sync and ride export for Claude Code.",
-    "version": "0.1.0"
+    "version": "0.1.1"
   },
   "plugins": [
     {
       "name": "ride-slurp",
       "description": "Pull rides off a Garmin device over USB and export them as GPX, CSV, JSON or a markdown training log.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "author": { "name": "Pascal Kremp" },
       "source": "./"
     }

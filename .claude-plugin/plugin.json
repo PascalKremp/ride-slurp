@@ -1,6 +1,6 @@
 {
   "name": "ride-slurp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Pull rides off a Garmin bike computer over USB and export them as GPX, CSV, JSON or a markdown training log. Plus live heart rate from any BLE chest strap.",
   "author": { "name": "Pascal Kremp", "url": "https://github.com/PascalKremp" },
   "homepage": "https://github.com/PascalKremp/ride-slurp",

@@ -645,7 +645,7 @@ def link(target: str, text: str, style: str) -> str:
     return f"[[{target}]]" if style == "obsidian" else f"[{text}]({target}.md)"
 
 
-def render_month(month, rides, prev, nxt, lang, style) -> str:
+def render_month(month, rides, prev, nxt, lang, style, prefix="rides") -> str:
     L = LABELS[lang]
     t = totals(rides)
     longest = max(rides, key=lambda r: r["km"])
@@ -686,15 +686,15 @@ def render_month(month, rides, prev, nxt, lang, style) -> str:
 
     nav = []
     if prev:
-        nav.append(f"- {L['prev']}: {link(f'rides-{prev}', prev, style)}")
+        nav.append(f"- {L['prev']}: {link(f'{prefix}-{prev}', prev, style)}")
     if nxt:
-        nav.append(f"- {L['next']}: {link(f'rides-{nxt}', nxt, style)}")
+        nav.append(f"- {L['next']}: {link(f'{prefix}-{nxt}', nxt, style)}")
     if nav:
         out += ["## " + L["months"], ""] + nav
     return "\n".join(out) + "\n"
 
 
-def render_index(by_month, lang, style) -> str:
+def render_index(by_month, lang, style, prefix="rides") -> str:
     L = LABELS[lang]
     all_rides = [r for rs in by_month.values() for r in rs]
     t = totals(all_rides)
@@ -712,7 +712,7 @@ def render_index(by_month, lang, style) -> str:
            "|---|---:|---:|---:|---:|---:|"]
     for m, rs in sorted(by_month.items(), reverse=True):
         mt = totals(rs)
-        out.append(f"| {link(f'rides-{m}', m, style)} | {mt['n']} | "
+        out.append(f"| {link(f'{prefix}-{m}', m, style)} | {mt['n']} | "
                    f"{num(mt['km'], 1, lang)} | {hms(mt['moving_s'])} | "
                    f"{num(mt['ascent_m'], 0, lang)} | {num(mt['tss'], 0, lang)} |")
     return "\n".join(out) + "\n"
@@ -735,15 +735,16 @@ def cmd_log(args) -> int:
     for i, m in enumerate(months):
         prev = months[i - 1] if i else None
         nxt = months[i + 1] if i + 1 < len(months) else None
-        path = os.path.join(out_dir, f"rides-{m}.md")
+        path = os.path.join(out_dir, f"{args.prefix}-{m}.md")
         with open(path, "w", encoding="utf-8") as f:
-            f.write(render_month(m, by_month[m], prev, nxt, args.lang, args.link_style))
+            f.write(render_month(m, by_month[m], prev, nxt, args.lang,
+                                 args.link_style, args.prefix))
         written.append(path)
 
     index_name = "_index.md" if args.link_style == "obsidian" else "index.md"
     index_path = os.path.join(out_dir, index_name)
     with open(index_path, "w", encoding="utf-8") as f:
-        f.write(render_index(by_month, args.lang, args.link_style))
+        f.write(render_index(by_month, args.lang, args.link_style, args.prefix))
     written.append(index_path)
 
     print(json.dumps({"ok": True, "months": len(months), "rides": len(rides),
@@ -793,6 +794,9 @@ def main() -> int:
     l.add_argument("--lang", choices=["en", "de"], default="en")
     l.add_argument("--link-style", choices=["plain", "obsidian"], default="plain",
                    help="plain markdown links (default) or Obsidian [[wiki-links]]")
+    l.add_argument("--prefix", default="rides",
+                   help="filename prefix for the monthly files (default: rides, "
+                        "giving rides-YYYY-MM.md)")
     l.set_defaults(func=cmd_log)
 
     args = p.parse_args()

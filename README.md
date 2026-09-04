@@ -66,6 +66,7 @@ the right month automatically.
 - `--link-style plain` (default) — ordinary markdown links, works anywhere
 - `--link-style obsidian` — `[[wiki-links]]` and `_index.md` for an Obsidian vault
 - `--lang en` (default) / `--lang de` — headings and number formatting
+- `--prefix rides` — filename prefix, e.g. `--prefix fahrten` gives `fahrten-2026-08.md`
 
 ## Commands
 

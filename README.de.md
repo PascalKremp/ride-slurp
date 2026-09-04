@@ -67,6 +67,7 @@ hinzugekommene alte Fahrt landet also automatisch im richtigen Monat.
 - `--link-style plain` (Standard) — normale Markdown-Links, funktioniert überall
 - `--link-style obsidian` — `[[Wiki-Links]]` und `_index.md` für einen Obsidian-Vault
 - `--lang en` (Standard) / `--lang de` — Überschriften und Zahlenformat
+- `--prefix rides` — Dateinamens-Präfix, z. B. `--prefix fahrten` ergibt `fahrten-2026-08.md`
 
 ## Befehle
 
